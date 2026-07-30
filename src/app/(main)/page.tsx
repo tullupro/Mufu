@@ -1,4 +1,5 @@
 import { getServerSession } from "next-auth";
+import { redirect } from "next/navigation";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
@@ -6,6 +7,7 @@ import { PlaySquare } from "lucide-react";
 
 export default async function Home() {
   const session = await getServerSession(authOptions);
+  if (!session || !session.user) redirect("/login");
 
   const [videos, continueWatching] = await Promise.all([
     prisma.video.findMany({
