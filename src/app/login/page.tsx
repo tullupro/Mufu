@@ -56,7 +56,7 @@ export default function LoginPage() {
   };
   const fadeUp = {
     hidden: { opacity: 0, y: 15 },
-    show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 200, damping: 25 } },
+    show: { opacity: 1, y: 0, transition: { type: "spring" as const, stiffness: 200, damping: 25 } },
   };
 
   return (
