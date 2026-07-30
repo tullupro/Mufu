@@ -1,0 +1,63 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String         @id @default(uuid())
+  username      String         @unique
+  password      String
+  role          String         @default("USER") // ADMIN or USER
+  avatarUrl     String?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  lastLogin     DateTime?
+  watchHistory  WatchHistory[]
+}
+
+model Video {
+  id            String         @id @default(uuid())
+  title         String
+  description   String?
+  driveFileId   String         @unique
+  thumbnailUrl  String?
+  duration      Int            @default(0) // in seconds
+  views         Int            @default(0)
+  visibility    String         @default("PRIVATE") // PRIVATE or EVERYONE
+  categoryId    String?
+  category      Category?      @relation(fields: [categoryId], references: [id])
+  tags          String         @default("[]") // JSON string
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  watchHistory  WatchHistory[]
+}
+
+model Category {
+  id            String         @id @default(uuid())
+  name          String         @unique
+  icon          String?
+  color         String?
+  videos        Video[]
+}
+
+model WatchHistory {
+  id            String         @id @default(uuid())
+  userId        String
+  videoId       String
+  timestamp     Float          @default(0)
+  completed     Boolean        @default(false)
+  lastWatched   DateTime       @default(now())
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  video         Video          @relation(fields: [videoId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, videoId])
+}
+
+model Setting {
+  key   String @id
+  value String
+}
