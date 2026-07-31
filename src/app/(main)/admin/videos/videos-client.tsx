@@ -22,7 +22,6 @@ export function VideosClient({ videos: initialVideos }: { videos: VideoItem[] })
   const [deleteTarget, setDeleteTarget] = useState<VideoItem | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
-  const [removingId, setRemovingId] = useState<string | null>(null);
 
   const showToast = (message: string, type: "success" | "error" = "success") => {
     setToast({ message, type });
@@ -33,31 +32,29 @@ export function VideosClient({ videos: initialVideos }: { videos: VideoItem[] })
     if (!deleteTarget) return;
     setDeleting(true);
 
+    // Optimistic: immediately remove from UI
+    const removedVideo = deleteTarget;
+    const previousVideos = [...videos];
+    setVideos((prev) => prev.filter((v) => v.id !== removedVideo.id));
+    setDeleteTarget(null);
+    setDeleting(false);
+    showToast(`"${removedVideo.title}" has been deleted`);
+
     try {
-      const res = await fetch(`/api/admin/videos?id=${deleteTarget.id}`, {
+      const res = await fetch(`/api/admin/videos?id=${removedVideo.id}`, {
         method: "POST",
         redirect: "follow",
       });
 
-      if (res.ok || res.redirected) {
-        // Animate removal
-        setRemovingId(deleteTarget.id);
-        setTimeout(() => {
-          setVideos((prev) => prev.filter((v) => v.id !== deleteTarget!.id));
-          setRemovingId(null);
-          showToast(`"${deleteTarget!.title}" has been deleted`);
-          setDeleteTarget(null);
-          setDeleting(false);
-        }, 400);
-      } else {
+      if (!res.ok && !res.redirected) {
+        // Rollback on failure
+        setVideos(previousVideos);
         showToast("Failed to delete video", "error");
-        setDeleting(false);
-        setDeleteTarget(null);
       }
     } catch {
-      showToast("Network error", "error");
-      setDeleting(false);
-      setDeleteTarget(null);
+      // Rollback on network error
+      setVideos(previousVideos);
+      showToast("Network error — video restored", "error");
     }
   };
 
@@ -74,7 +71,7 @@ export function VideosClient({ videos: initialVideos }: { videos: VideoItem[] })
         </div>
         <Link
           href="/admin/upload"
-          className="bg-accent hover:bg-accent/90 text-white px-5 py-2.5 rounded-xl font-medium transition-colors flex items-center gap-2 shadow-[0_0_20px_rgba(255,61,113,0.3)] text-sm"
+          className="bg-accent hover:bg-accent/90 text-white px-5 py-2.5 rounded-xl font-medium transition-colors duration-100 flex items-center gap-2 shadow-[0_0_20px_rgba(255,61,113,0.3)] text-sm active:scale-[0.97]"
         >
           <Plus size={18} /> Upload Video
         </Link>
@@ -84,6 +81,7 @@ export function VideosClient({ videos: initialVideos }: { videos: VideoItem[] })
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.18 }}
           className="glass p-8 md:p-16 rounded-3xl flex flex-col items-center justify-center text-center"
         >
           <Video size={48} className="text-white/20 mb-4" />
@@ -93,25 +91,19 @@ export function VideosClient({ videos: initialVideos }: { videos: VideoItem[] })
       ) : (
         <div className="space-y-3">
           <AnimatePresence mode="popLayout">
-            {videos.map((video, i) => (
+            {videos.map((video) => (
               <motion.div
                 key={video.id}
                 layout
-                initial={{ opacity: 0, y: 20 }}
-                animate={{
-                  opacity: removingId === video.id ? 0 : 1,
-                  y: 0,
-                  scale: removingId === video.id ? 0.95 : 1,
-                  x: removingId === video.id ? 60 : 0,
-                }}
-                exit={{ opacity: 0, scale: 0.9, x: 60 }}
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0, scale: 1, x: 0 }}
+                exit={{ opacity: 0, scale: 0.95, x: 60 }}
                 transition={{
-                  type: "spring",
-                  stiffness: 300,
+                  type: "spring" as const,
+                  stiffness: 500,
                   damping: 30,
-                  delay: i * 0.03,
                 }}
-                className="glass-panel rounded-xl md:rounded-2xl overflow-hidden flex items-center gap-3 md:gap-5 p-2 md:p-4 hover:bg-white/5 transition-colors border border-white/5"
+                className="glass-panel rounded-xl md:rounded-2xl overflow-hidden flex items-center gap-3 md:gap-5 p-2 md:p-4 hover:bg-white/5 transition-colors duration-100 border border-white/5"
               >
                 <Link
                   href={`/watch/${video.id}`}
@@ -127,7 +119,7 @@ export function VideosClient({ videos: initialVideos }: { videos: VideoItem[] })
                   )}
                 </Link>
                 <div className="flex-1 min-w-0">
-                  <Link href={`/watch/${video.id}`} className="hover:text-accent transition-colors">
+                  <Link href={`/watch/${video.id}`} className="hover:text-accent transition-colors duration-100">
                     <h3 className="font-medium text-white truncate text-sm md:text-base">
                       {video.title}
                     </h3>
@@ -151,7 +143,7 @@ export function VideosClient({ videos: initialVideos }: { videos: VideoItem[] })
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.9 }}
                   onClick={() => setDeleteTarget(video)}
-                  className="text-white/20 hover:text-error transition-colors p-2 shrink-0"
+                  className="text-white/20 hover:text-error transition-colors duration-100 p-2 shrink-0"
                   aria-label="Delete video"
                 >
                   <Trash2 size={18} />

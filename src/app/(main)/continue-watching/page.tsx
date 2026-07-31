@@ -46,14 +46,14 @@ export default async function ContinueWatchingPage() {
               <Link
                 key={entry.id}
                 href={`/watch/${entry.video.id}?t=${Math.floor(entry.timestamp)}`}
-                className="glass rounded-2xl overflow-hidden group hover:-translate-y-1 transition-all duration-300 border border-white/5 hover:border-accent/30 block"
+                className="glass rounded-2xl overflow-hidden group hover:-translate-y-1 transition-transform duration-150 border border-white/5 hover:border-accent/30 block"
               >
                 <div className="aspect-video bg-[#1a1a1a] relative overflow-hidden">
                   {entry.video.thumbnailUrl && (
-                    <img src={entry.video.thumbnailUrl} alt={entry.video.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                    <img src={entry.video.thumbnailUrl} alt={entry.video.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200" />
                   )}
                   {/* Play icon overlay */}
-                  <div className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity duration-150">
                     <div className="w-12 h-12 bg-accent/90 rounded-full flex items-center justify-center">
                       <PlaySquare size={22} className="text-white ml-0.5" fill="currentColor" />
                     </div>

@@ -52,9 +52,10 @@ export function Sidebar() {
         {links.map((link) => {
           const isActive = pathname === link.href;
           return (
-            <Link key={link.href} href={link.href}>
-              <div
-                className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 relative group ${
+            <Link key={link.href} href={link.href} prefetch>
+              <motion.div
+                whileTap={{ scale: 0.97 }}
+                className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors duration-100 relative group ${
                   isActive ? "text-white" : "text-white/50 hover:text-white hover:bg-white/5"
                 }`}
               >
@@ -63,31 +64,35 @@ export function Sidebar() {
                     layoutId="sidebar-active"
                     className="absolute inset-0 bg-accent/20 rounded-xl"
                     initial={false}
-                    transition={{ type: "spring", stiffness: 500, damping: 35 }}
+                    transition={{ type: "spring" as const, stiffness: 500, damping: 35 }}
                   />
                 )}
                 <link.icon size={20} className="relative z-10 shrink-0" />
                 <span className="font-medium relative z-10 truncate">{link.name}</span>
-              </div>
+              </motion.div>
             </Link>
           );
         })}
       </nav>
 
       <div className="p-4 mt-auto border-t border-white/5">
-        <Link href="/settings">
-          <div className="flex items-center gap-3 px-4 py-3 rounded-xl text-white/50 hover:text-white hover:bg-white/5 transition-colors cursor-pointer mb-1">
+        <Link href="/settings" prefetch>
+          <motion.div
+            whileTap={{ scale: 0.97 }}
+            className="flex items-center gap-3 px-4 py-3 rounded-xl text-white/50 hover:text-white hover:bg-white/5 transition-colors duration-100 cursor-pointer mb-1"
+          >
             <Settings size={20} className="shrink-0" />
             <span className="font-medium">Settings</span>
-          </div>
+          </motion.div>
         </Link>
-        <div
+        <motion.div
+          whileTap={{ scale: 0.97 }}
           onClick={() => signOut({ callbackUrl: "/login" })}
-          className="flex items-center gap-3 px-4 py-3 rounded-xl text-error/70 hover:text-error hover:bg-error/10 transition-colors cursor-pointer"
+          className="flex items-center gap-3 px-4 py-3 rounded-xl text-error/70 hover:text-error hover:bg-error/10 transition-colors duration-100 cursor-pointer"
         >
           <LogOut size={20} className="shrink-0" />
           <span className="font-medium">Log out</span>
-        </div>
+        </motion.div>
       </div>
     </>
   );
@@ -95,13 +100,14 @@ export function Sidebar() {
   return (
     <>
       {/* Mobile hamburger button */}
-      <button
+      <motion.button
+        whileTap={{ scale: 0.9 }}
         onClick={() => setMobileOpen(true)}
-        className="fixed top-5 left-4 z-50 md:hidden w-10 h-10 bg-card/80 backdrop-blur-xl border border-white/10 rounded-xl flex items-center justify-center text-white/70 hover:text-white transition-colors"
+        className="fixed top-5 left-4 z-50 md:hidden w-10 h-10 bg-card/80 backdrop-blur-xl border border-white/10 rounded-xl flex items-center justify-center text-white/70 hover:text-white transition-colors duration-100"
         aria-label="Open menu"
       >
         <Menu size={20} />
-      </button>
+      </motion.button>
 
       {/* Desktop sidebar */}
       <div className="hidden md:flex w-64 h-full flex-col glass-panel border-r border-white/5 relative z-10 shrink-0">
@@ -116,7 +122,7 @@ export function Sidebar() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              transition={{ duration: 0.2 }}
+              transition={{ duration: 0.15 }}
               className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 md:hidden"
               onClick={() => setMobileOpen(false)}
             />
@@ -124,16 +130,17 @@ export function Sidebar() {
               initial={{ x: "-100%" }}
               animate={{ x: 0 }}
               exit={{ x: "-100%" }}
-              transition={{ type: "spring", stiffness: 400, damping: 35 }}
+              transition={{ type: "spring" as const, stiffness: 500, damping: 35 }}
               className="fixed top-0 left-0 bottom-0 w-72 flex flex-col glass-panel border-r border-white/5 z-50 md:hidden"
             >
-              <button
+              <motion.button
+                whileTap={{ scale: 0.85 }}
                 onClick={() => setMobileOpen(false)}
-                className="absolute top-5 right-4 w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center text-white/70 hover:text-white transition-colors"
+                className="absolute top-5 right-4 w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center text-white/70 hover:text-white transition-colors duration-100"
                 aria-label="Close menu"
               >
                 <X size={16} />
-              </button>
+              </motion.button>
               {sidebarContent}
             </motion.div>
           </>

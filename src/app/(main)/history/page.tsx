@@ -46,7 +46,7 @@ export default async function HistoryPage() {
             <Link
               key={entry.id}
               href={`/watch/${entry.video.id}`}
-              className="glass rounded-xl md:rounded-2xl overflow-hidden group hover:bg-white/5 transition-all duration-200 flex items-center gap-3 md:gap-5 p-2 md:p-3 border border-white/5 hover:border-white/10 block"
+              className="glass rounded-xl md:rounded-2xl overflow-hidden group hover:bg-white/5 transition-colors duration-100 flex items-center gap-3 md:gap-5 p-2 md:p-3 border border-white/5 hover:border-white/10 block"
             >
               <div className="w-28 md:w-44 aspect-video bg-[#1a1a1a] rounded-lg md:rounded-xl overflow-hidden relative shrink-0">
                 {entry.video.thumbnailUrl && (

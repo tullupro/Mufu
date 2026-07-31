@@ -12,8 +12,8 @@ export default async function WatchPage({ params }: { params: Promise<{ id: stri
     redirect("/");
   }
 
-  // Increment views in background
-  await prisma.video.update({
+  // Increment views in background — fire and forget, don't block render
+  void prisma.video.update({
     where: { id: video.id },
     data: { views: { increment: 1 } },
   });

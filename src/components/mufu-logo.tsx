@@ -71,7 +71,7 @@ export function MufuLogo({ size = 56, className = "", animate = false }: MufuLog
           filter="url(#logo-glow)"
           initial={{ opacity: 0 }}
           animate={{ opacity: [0, 0.5, 0.3, 0.5, 0.3] }}
-          transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+          transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
         />
       )}
 
@@ -98,7 +98,7 @@ export function MufuLogo({ size = 56, className = "", animate = false }: MufuLog
           mask={`url(#play-cutout-${size})`}
           initial={{ x: -size }}
           animate={{ x: size }}
-          transition={{ duration: 2.5, repeat: Infinity, repeatDelay: 3, ease: "easeInOut" }}
+          transition={{ duration: 2.5, repeat: Infinity, repeatDelay: 2, ease: "easeInOut" }}
         />
       )}
     </motion.svg>

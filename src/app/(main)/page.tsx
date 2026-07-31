@@ -54,13 +54,13 @@ export default async function Home() {
                 <Link
                   key={entry.id}
                   href={`/watch/${entry.video.id}?t=${Math.floor(entry.timestamp)}`}
-                  className="glass rounded-xl overflow-hidden group hover:-translate-y-1 transition-all duration-200 border border-white/5 hover:border-accent/30 block"
+                  className="glass rounded-xl overflow-hidden group hover:-translate-y-1 transition-transform duration-150 border border-white/5 hover:border-accent/30 block"
                 >
                   <div className="aspect-video bg-[#1a1a1a] relative overflow-hidden">
                     {entry.video.thumbnailUrl && (
-                      <img src={entry.video.thumbnailUrl} alt={entry.video.title} className="w-full h-full object-cover" />
+                      <img src={entry.video.thumbnailUrl} alt={entry.video.title} className="w-full h-full object-cover" loading="lazy" />
                     )}
-                    <div className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity duration-150">
                       <div className="w-10 h-10 bg-accent/90 rounded-full flex items-center justify-center">
                         <PlaySquare size={18} className="text-white ml-0.5" fill="currentColor" />
                       </div>
@@ -70,7 +70,7 @@ export default async function Home() {
                     </div>
                   </div>
                   <div className="p-3">
-                    <h3 className="font-medium text-white truncate text-xs md:text-sm group-hover:text-accent transition-colors">{entry.video.title}</h3>
+                    <h3 className="font-medium text-white truncate text-xs md:text-sm group-hover:text-accent transition-colors duration-100">{entry.video.title}</h3>
                   </div>
                 </Link>
               );
@@ -91,12 +91,14 @@ export default async function Home() {
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-6">
             {videos.map((video) => (
-              <Link href={`/watch/${video.id}`} key={video.id} className="glass rounded-xl md:rounded-2xl overflow-hidden group hover:-translate-y-1 md:hover:-translate-y-2 transition-all duration-300 hover:shadow-[0_0_30px_rgba(255,61,113,0.15)] border border-white/5 hover:border-accent/30 block">
-                <div className="aspect-video bg-[#1a1a1a] relative overflow-hidden group-hover:scale-105 transition-transform duration-500">
-                  {video.thumbnailUrl && <img src={video.thumbnailUrl} alt={video.title} className="w-full h-full object-cover" loading="lazy" />}
+              <Link href={`/watch/${video.id}`} key={video.id} className="glass rounded-xl md:rounded-2xl overflow-hidden group hover:-translate-y-1 transition-transform duration-150 hover:shadow-[0_0_30px_rgba(255,61,113,0.15)] border border-white/5 hover:border-accent/30 block">
+                <div className="aspect-video bg-[#1a1a1a] relative overflow-hidden">
+                  <div className="w-full h-full group-hover:scale-105 transition-transform duration-200">
+                    {video.thumbnailUrl && <img src={video.thumbnailUrl} alt={video.title} className="w-full h-full object-cover" loading="lazy" />}
+                  </div>
                 </div>
                 <div className="p-3 md:p-5">
-                  <h3 className="font-medium text-white truncate text-sm md:text-lg group-hover:text-accent transition-colors">{video.title}</h3>
+                  <h3 className="font-medium text-white truncate text-sm md:text-lg group-hover:text-accent transition-colors duration-100">{video.title}</h3>
                   <p className="text-xs md:text-sm text-white/50 mt-1">{video.views} views</p>
                 </div>
               </Link>

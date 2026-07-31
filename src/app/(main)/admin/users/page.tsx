@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Users, UserPlus, Trash2, Shield, User } from "lucide-react";
+import { DeleteConfirmModal, Toast } from "@/components/premium-ui";
 
 interface UserData {
   id: string;
@@ -18,9 +19,17 @@ export default function AdminUsersPage() {
   const [newUsername, setNewUsername] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [creating, setCreating] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<UserData | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
 
-  // Load users on mount
-  if (!loaded) {
+  const showToast = (message: string, type: "success" | "error" = "success") => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 3000);
+  };
+
+  // Load users on mount — proper useEffect instead of render-loop fetch
+  useEffect(() => {
     fetch("/api/admin/users")
       .then((r) => r.json())
       .then((data) => {
@@ -28,7 +37,7 @@ export default function AdminUsersPage() {
         setLoaded(true);
       })
       .catch(() => setLoaded(true));
-  }
+  }, []);
 
   const handleCreateUser = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -45,17 +54,38 @@ export default function AdminUsersPage() {
         setNewUsername("");
         setNewPassword("");
         setShowCreate(false);
+        showToast(`User "${data.user.username}" created`);
+      } else {
+        showToast("Failed to create user", "error");
       }
+    } catch {
+      showToast("Network error", "error");
     } finally {
       setCreating(false);
     }
   };
 
-  const handleDeleteUser = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this user?")) return;
-    const res = await fetch(`/api/admin/users?id=${id}`, { method: "DELETE" });
-    if (res.ok) {
-      setUsers((prev) => prev.filter((u) => u.id !== id));
+  const handleDeleteUser = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+
+    // Optimistic removal
+    const removedUser = deleteTarget;
+    const previousUsers = [...users];
+    setUsers((prev) => prev.filter((u) => u.id !== removedUser.id));
+    setDeleteTarget(null);
+    setDeleting(false);
+    showToast(`User "${removedUser.username}" deleted`);
+
+    try {
+      const res = await fetch(`/api/admin/users?id=${removedUser.id}`, { method: "DELETE" });
+      if (!res.ok) {
+        setUsers(previousUsers);
+        showToast("Failed to delete user", "error");
+      }
+    } catch {
+      setUsers(previousUsers);
+      showToast("Network error — user restored", "error");
     }
   };
 
@@ -68,12 +98,13 @@ export default function AdminUsersPage() {
           <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-white mb-1">Manage Users</h1>
           <p className="text-white/50 text-sm">Create and manage platform accounts</p>
         </div>
-        <button
+        <motion.button
+          whileTap={{ scale: 0.95 }}
           onClick={() => setShowCreate(!showCreate)}
-          className="bg-accent hover:bg-accent/90 text-white px-5 py-3 rounded-xl font-medium transition-colors flex items-center gap-2 shadow-[0_0_20px_rgba(255,61,113,0.3)] text-sm"
+          className="bg-accent hover:bg-accent/90 text-white px-5 py-3 rounded-xl font-medium transition-colors duration-100 flex items-center gap-2 shadow-[0_0_20px_rgba(255,61,113,0.3)] text-sm"
         >
           <UserPlus size={18} /> Create User
-        </button>
+        </motion.button>
       </div>
 
       {/* Create User Form */}
@@ -82,6 +113,7 @@ export default function AdminUsersPage() {
           initial={{ opacity: 0, y: -10, height: 0 }}
           animate={{ opacity: 1, y: 0, height: "auto" }}
           exit={{ opacity: 0, y: -10, height: 0 }}
+          transition={{ duration: 0.18 }}
           onSubmit={handleCreateUser}
           className="glass-panel p-5 md:p-6 rounded-2xl mb-6 md:mb-8"
         >
@@ -93,7 +125,7 @@ export default function AdminUsersPage() {
                 required
                 value={newUsername}
                 onChange={(e) => setNewUsername(e.target.value)}
-                className="w-full bg-black/40 border border-white/10 rounded-xl p-3 text-white placeholder:text-white/30 focus:outline-none focus:border-accent/50 transition-all text-sm"
+                className="w-full bg-black/40 border border-white/10 rounded-xl p-3 text-white placeholder:text-white/30 focus:outline-none focus:border-accent/50 transition-colors duration-150 text-sm"
                 placeholder="Enter username"
               />
             </div>
@@ -104,18 +136,28 @@ export default function AdminUsersPage() {
                 required
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
-                className="w-full bg-black/40 border border-white/10 rounded-xl p-3 text-white placeholder:text-white/30 focus:outline-none focus:border-accent/50 transition-all text-sm"
+                className="w-full bg-black/40 border border-white/10 rounded-xl p-3 text-white placeholder:text-white/30 focus:outline-none focus:border-accent/50 transition-colors duration-150 text-sm"
                 placeholder="Enter password"
               />
             </div>
           </div>
           <div className="flex gap-3 justify-end">
-            <button type="button" onClick={() => setShowCreate(false)} className="px-4 py-2.5 rounded-xl text-white/50 hover:bg-white/5 text-sm transition-colors">
+            <motion.button
+              type="button"
+              whileTap={{ scale: 0.95 }}
+              onClick={() => setShowCreate(false)}
+              className="px-4 py-2.5 rounded-xl text-white/50 hover:bg-white/5 text-sm transition-colors duration-100"
+            >
               Cancel
-            </button>
-            <button type="submit" disabled={creating} className="bg-accent hover:bg-accent/90 text-white px-5 py-2.5 rounded-xl font-medium text-sm disabled:opacity-50 transition-colors">
+            </motion.button>
+            <motion.button
+              type="submit"
+              disabled={creating}
+              whileTap={{ scale: 0.95 }}
+              className="bg-accent hover:bg-accent/90 text-white px-5 py-2.5 rounded-xl font-medium text-sm disabled:opacity-50 transition-colors duration-100"
+            >
               {creating ? "Creating..." : "Create Account"}
-            </button>
+            </motion.button>
           </div>
         </motion.form>
       )}
@@ -136,7 +178,7 @@ export default function AdminUsersPage() {
         ) : (
           <div className="divide-y divide-white/5">
             {users.map((user) => (
-              <div key={user.id} className="flex items-center justify-between p-4 md:p-5 hover:bg-white/5 transition-colors">
+              <div key={user.id} className="flex items-center justify-between p-4 md:p-5 hover:bg-white/5 transition-colors duration-100">
                 <div className="flex items-center gap-3 md:gap-4 min-w-0">
                   <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${user.role === "ADMIN" ? "bg-accent/20 text-accent" : "bg-secondary/20 text-secondary"}`}>
                     {user.role === "ADMIN" ? <Shield size={18} /> : <User size={18} />}
@@ -147,19 +189,37 @@ export default function AdminUsersPage() {
                   </div>
                 </div>
                 {user.role !== "ADMIN" && (
-                  <button
-                    onClick={() => handleDeleteUser(user.id)}
-                    className="text-white/30 hover:text-error transition-colors p-2 shrink-0"
+                  <motion.button
+                    whileTap={{ scale: 0.85 }}
+                    onClick={() => setDeleteTarget(user)}
+                    className="text-white/30 hover:text-error transition-colors duration-100 p-2 shrink-0"
                     aria-label="Delete user"
                   >
                     <Trash2 size={18} />
-                  </button>
+                  </motion.button>
                 )}
               </div>
             ))}
           </div>
         )}
       </div>
+
+      {/* Delete confirmation modal */}
+      <DeleteConfirmModal
+        isOpen={!!deleteTarget}
+        title="Delete User"
+        message={`Are you sure you want to delete "${deleteTarget?.username}"? This action cannot be undone.`}
+        onConfirm={handleDeleteUser}
+        onCancel={() => { setDeleteTarget(null); setDeleting(false); }}
+        loading={deleting}
+      />
+
+      {/* Toast */}
+      <Toast
+        message={toast?.message || ""}
+        type={toast?.type}
+        isVisible={!!toast}
+      />
     </div>
   );
 }

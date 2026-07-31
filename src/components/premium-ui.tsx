@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useState } from "react";
 import { MufuLogo } from "./mufu-logo";
 
 interface Particle {
@@ -19,52 +19,74 @@ function generateParticles(count: number): Particle[] {
     id: i,
     x: Math.random() * 100,
     y: Math.random() * 100,
-    size: Math.random() * 2 + 0.5,
-    duration: Math.random() * 8 + 12,
-    delay: Math.random() * 5,
-    opacity: Math.random() * 0.3 + 0.05,
+    size: Math.random() * 2.5 + 0.5,
+    duration: Math.random() * 10 + 8,
+    delay: Math.random() * 4,
+    opacity: Math.random() * 0.25 + 0.03,
   }));
 }
 
+// ——— Cinematic Loading / Welcome Screen ———
+
 export function LoadingScreen({ onComplete }: { onComplete?: () => void }) {
-  const [particles] = useState(() => generateParticles(18));
-  const [show, setShow] = useState(true);
+  const [particles] = useState(() => generateParticles(20));
   const [mounted, setMounted] = useState(false);
+  const [phase, setPhase] = useState(0); // 0=hidden, 1=glow, 2=logo, 3=text, 4=breathe, 5=exit
 
   useEffect(() => {
     setMounted(true);
-    const timer = setTimeout(() => {
-      setShow(false);
-      setTimeout(() => onComplete?.(), 600);
-    }, 2800);
-    return () => clearTimeout(timer);
+
+    // Phase timeline
+    const t1 = setTimeout(() => setPhase(1), 100);      // Glow appears
+    const t2 = setTimeout(() => setPhase(2), 800);       // Logo materializes
+    const t3 = setTimeout(() => setPhase(3), 2600);      // "Welcome" text
+    const t4 = setTimeout(() => setPhase(4), 4200);      // Breathing + float
+    const t5 = setTimeout(() => setPhase(5), 5800);      // Begin exit
+    const t6 = setTimeout(() => onComplete?.(), 6800);    // Fully done
+
+    return () => {
+      [t1, t2, t3, t4, t5, t6].forEach(clearTimeout);
+    };
   }, [onComplete]);
+
+  if (!mounted) return null;
 
   return (
     <AnimatePresence>
-      {mounted && show && (
+      {phase < 5 && (
         <motion.div
           initial={{ opacity: 1 }}
-          exit={{ opacity: 0, scale: 1.02 }}
-          transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-          className="fixed inset-0 z-[9999] flex items-center justify-center bg-[#050507]"
+          exit={{ opacity: 0 }}
+          transition={{ duration: 1.0, ease: [0.16, 1, 0.3, 1] }}
+          className="fixed inset-0 z-[9999] flex items-center justify-center bg-[#030305] overflow-hidden"
         >
-          {/* Background gradient haze */}
-          <div className="absolute inset-0 overflow-hidden">
-            <motion.div
-              className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full"
+          {/* Deep atmospheric gradient haze */}
+          <motion.div
+            className="absolute inset-0"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: phase >= 1 ? 1 : 0 }}
+            transition={{ duration: 2.5, ease: "easeOut" }}
+          >
+            <div
+              className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] rounded-full"
               style={{
-                background: "radial-gradient(circle, rgba(108, 99, 255, 0.08) 0%, rgba(255, 61, 113, 0.05) 40%, transparent 70%)",
+                background: "radial-gradient(circle, rgba(255, 61, 113, 0.06) 0%, rgba(108, 99, 255, 0.04) 35%, transparent 65%)",
+              }}
+            />
+            <motion.div
+              className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full"
+              style={{
+                background: "radial-gradient(circle, rgba(255, 61, 113, 0.1) 0%, transparent 60%)",
               }}
               animate={{
-                scale: [1, 1.15, 1],
-                opacity: [0.6, 1, 0.6],
+                scale: [1, 1.2, 1.05, 1.15, 1],
+                opacity: [0.3, 0.7, 0.5, 0.6, 0.4],
               }}
-              transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
+              transition={{ duration: 6, ease: "easeInOut" }}
             />
-          </div>
+          </motion.div>
 
-          {/* Atmospheric particles */}
+          {/* Floating atmospheric particles */}
           {particles.map((p) => (
             <motion.div
               key={p.id}
@@ -76,11 +98,10 @@ export function LoadingScreen({ onComplete }: { onComplete?: () => void }) {
                 top: `${p.y}%`,
               }}
               initial={{ opacity: 0 }}
-              animate={{
+              animate={phase >= 1 ? {
                 opacity: [0, p.opacity, 0],
-                y: [0, -30, -60],
-                x: [0, Math.random() * 20 - 10],
-              }}
+                y: [0, -40, -80],
+              } : {}}
               transition={{
                 duration: p.duration,
                 delay: p.delay,
@@ -90,98 +111,94 @@ export function LoadingScreen({ onComplete }: { onComplete?: () => void }) {
             />
           ))}
 
-          {/* Center logo container */}
-          <div className="relative flex flex-col items-center gap-8">
-            {/* Ambient glow behind logo */}
+          {/* Central content container */}
+          <div className="relative flex flex-col items-center">
+
+            {/* Soft ambient glow behind logo */}
             <motion.div
-              className="absolute -inset-20 rounded-full"
+              className="absolute -inset-32 rounded-full"
               style={{
-                background: "radial-gradient(circle, rgba(255, 61, 113, 0.12) 0%, transparent 65%)",
+                background: "radial-gradient(circle, rgba(255, 61, 113, 0.15) 0%, rgba(108, 99, 255, 0.05) 40%, transparent 65%)",
               }}
-              animate={{
-                scale: [1, 1.2, 1],
-                opacity: [0.5, 0.8, 0.5],
-              }}
-              transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+              initial={{ opacity: 0, scale: 0.6 }}
+              animate={phase >= 2 ? {
+                opacity: [0, 0.8, 0.5],
+                scale: [0.6, 1.1, 1],
+              } : {}}
+              transition={{ duration: 2.5, ease: [0.16, 1, 0.3, 1] }}
             />
 
-            {/* Logo with breathing animation */}
+            {/* Logo — materializes from blur, then floats gently */}
             <motion.div
-              initial={{ scale: 0.92, opacity: 0, filter: "blur(12px)" }}
-              animate={{ scale: 1, opacity: 1, filter: "blur(0px)" }}
-              transition={{ type: "spring", stiffness: 80, damping: 20, delay: 0.2 }}
+              initial={{ opacity: 0, scale: 0.85, filter: "blur(20px)", y: 20 }}
+              animate={
+                phase >= 4
+                  ? { opacity: 1, scale: 1, filter: "blur(0px)", y: -8 }
+                  : phase >= 2
+                    ? { opacity: 1, scale: 1, filter: "blur(0px)", y: 0 }
+                    : {}
+              }
+              transition={
+                phase >= 4
+                  ? { duration: 1.5, ease: "easeInOut" }
+                  : { duration: 1.8, ease: [0.16, 1, 0.3, 1] }
+              }
             >
               <motion.div
-                animate={{
-                  scale: [1, 1.02, 1],
-                  rotate: [0, 1, -1, 0],
-                }}
-                transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+                animate={phase >= 4 ? {
+                  y: [0, -6, 0, -4, 0],
+                  rotate: [0, 0.8, -0.5, 0.3, 0],
+                } : {}}
+                transition={{ duration: 3, ease: "easeInOut" }}
               >
-                <MufuLogo size={80} animate />
+                <MufuLogo size={90} animate />
               </motion.div>
             </motion.div>
 
-            {/* Brand text */}
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.6, duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-              className="flex flex-col items-center gap-3"
+            {/* Brand name "MUFU" — appears after logo */}
+            <motion.h1
+              className="text-[22px] font-semibold text-white/80 tracking-[0.25em] uppercase mt-10 select-none"
+              initial={{ opacity: 0, y: 12 }}
+              animate={phase >= 2 ? { opacity: 1, y: 0 } : {}}
+              transition={{ duration: 1.2, delay: 0.6, ease: [0.16, 1, 0.3, 1] }}
             >
-              <h1 className="text-2xl font-bold text-white/90 tracking-[0.2em] uppercase">
-                Mufu
-              </h1>
-              <motion.div
-                className="w-6 h-[2px] rounded-full bg-accent/60"
-                animate={{ width: [24, 40, 24], opacity: [0.4, 0.8, 0.4] }}
-                transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-              />
+              Mufu
+            </motion.h1>
+
+            {/* Elegant divider line */}
+            <motion.div
+              className="h-[1.5px] rounded-full bg-gradient-to-r from-transparent via-white/20 to-transparent mt-6"
+              initial={{ width: 0, opacity: 0 }}
+              animate={phase >= 3 ? { width: 120, opacity: 1 } : {}}
+              transition={{ duration: 1.0, ease: [0.16, 1, 0.3, 1] }}
+            />
+
+            {/* "Welcome" text — graceful reveal */}
+            <motion.div
+              className="flex flex-col items-center mt-7 gap-2"
+              initial={{ opacity: 0, y: 15 }}
+              animate={phase >= 3 ? { opacity: 1, y: 0 } : {}}
+              transition={{ duration: 1.2, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
+            >
+              <h2 className="text-white text-2xl md:text-3xl font-bold tracking-tight">
+                Welcome
+              </h2>
+              <p className="text-white/30 text-sm tracking-wide">
+                Your private streaming awaits
+              </p>
             </motion.div>
           </div>
+
+          {/* Subtle film grain texture overlay */}
+          <div
+            className="absolute inset-0 pointer-events-none opacity-[0.015]"
+            style={{
+              backgroundImage: "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E\")",
+            }}
+          />
         </motion.div>
       )}
     </AnimatePresence>
-  );
-}
-
-// ——— Ambient Particles Background (reusable for login) ———
-
-export function AmbientParticles({ count = 12 }: { count?: number }) {
-  const [particles] = useState(() => generateParticles(count));
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  if (!mounted) return null;
-
-  return (
-    <div className="absolute inset-0 overflow-hidden pointer-events-none">
-      {particles.map((p) => (
-        <motion.div
-          key={p.id}
-          className="absolute rounded-full bg-white/60"
-          style={{
-            width: p.size,
-            height: p.size,
-            left: `${p.x}%`,
-            top: `${p.y}%`,
-          }}
-          animate={{
-            opacity: [0, p.opacity, 0],
-            y: [0, -40, -80],
-          }}
-          transition={{
-            duration: p.duration,
-            delay: p.delay,
-            repeat: Infinity,
-            ease: "linear",
-          }}
-        />
-      ))}
-    </div>
   );
 }
 
@@ -204,7 +221,7 @@ export function DeleteConfirmModal({ isOpen, title, message, onConfirm, onCancel
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          transition={{ duration: 0.2 }}
+          transition={{ duration: 0.15 }}
           className="fixed inset-0 z-[100] flex items-center justify-center p-4"
           onClick={onCancel}
         >
@@ -213,10 +230,10 @@ export function DeleteConfirmModal({ isOpen, title, message, onConfirm, onCancel
 
           {/* Modal card */}
           <motion.div
-            initial={{ scale: 0.9, opacity: 0, y: 20 }}
-            animate={{ scale: 1, opacity: 1, y: 0 }}
-            exit={{ scale: 0.9, opacity: 0, y: 20 }}
-            transition={{ type: "spring", stiffness: 300, damping: 30 }}
+            initial={{ scale: 0.97, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.97, opacity: 0 }}
+            transition={{ type: "spring" as const, stiffness: 500, damping: 30, mass: 0.5 }}
             className="relative bg-[#141416] border border-white/10 rounded-2xl p-6 md:p-8 max-w-sm w-full shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
@@ -225,9 +242,9 @@ export function DeleteConfirmModal({ isOpen, title, message, onConfirm, onCancel
 
             {/* Icon */}
             <motion.div
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              transition={{ type: "spring", stiffness: 400, damping: 20, delay: 0.1 }}
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ type: "spring" as const, stiffness: 500, damping: 25 }}
               className="w-14 h-14 rounded-full bg-error/10 border border-error/20 flex items-center justify-center mx-auto mb-5"
             >
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="text-error">
@@ -235,33 +252,18 @@ export function DeleteConfirmModal({ isOpen, title, message, onConfirm, onCancel
               </svg>
             </motion.div>
 
-            <motion.h3
-              initial={{ opacity: 0, y: 5 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.15 }}
-              className="text-lg font-semibold text-white text-center mb-2"
-            >
+            <h3 className="text-lg font-semibold text-white text-center mb-2">
               {title}
-            </motion.h3>
-            <motion.p
-              initial={{ opacity: 0, y: 5 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-              className="text-white/50 text-sm text-center mb-6 leading-relaxed"
-            >
+            </h3>
+            <p className="text-white/50 text-sm text-center mb-6 leading-relaxed">
               {message}
-            </motion.p>
+            </p>
 
-            <motion.div
-              initial={{ opacity: 0, y: 5 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.25 }}
-              className="flex gap-3"
-            >
+            <div className="flex gap-3">
               <button
                 onClick={onCancel}
                 disabled={loading}
-                className="flex-1 bg-white/5 hover:bg-white/10 text-white/70 hover:text-white font-medium py-3 rounded-xl transition-all duration-200 text-sm border border-white/5"
+                className="flex-1 bg-white/5 hover:bg-white/10 text-white/70 hover:text-white font-medium py-3 rounded-xl transition-colors duration-150 text-sm border border-white/5 active:scale-[0.97]"
               >
                 Cancel
               </button>
@@ -269,7 +271,7 @@ export function DeleteConfirmModal({ isOpen, title, message, onConfirm, onCancel
                 onClick={onConfirm}
                 disabled={loading}
                 whileTap={{ scale: 0.95 }}
-                className="flex-1 bg-error/90 hover:bg-error text-white font-medium py-3 rounded-xl transition-all duration-200 text-sm relative overflow-hidden shadow-[0_0_20px_rgba(255,82,82,0.3)]"
+                className="flex-1 bg-error/90 hover:bg-error text-white font-medium py-3 rounded-xl transition-colors duration-150 text-sm relative overflow-hidden shadow-[0_0_20px_rgba(255,82,82,0.3)]"
               >
                 {loading ? (
                   <div className="flex items-center justify-center">
@@ -279,7 +281,7 @@ export function DeleteConfirmModal({ isOpen, title, message, onConfirm, onCancel
                   "Delete"
                 )}
               </motion.button>
-            </motion.div>
+            </div>
           </motion.div>
         </motion.div>
       )}
@@ -303,7 +305,7 @@ export function Toast({ message, type = "success", isVisible }: ToastProps) {
           initial={{ opacity: 0, y: 50, scale: 0.9 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: 20, scale: 0.95 }}
-          transition={{ type: "spring", stiffness: 400, damping: 30 }}
+          transition={{ type: "spring" as const, stiffness: 500, damping: 30 }}
           className={`fixed bottom-6 right-6 z-[200] px-5 py-3 rounded-xl text-sm font-medium shadow-2xl border backdrop-blur-xl flex items-center gap-2 ${
             type === "success"
               ? "bg-success/10 border-success/20 text-success"

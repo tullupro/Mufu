@@ -63,7 +63,7 @@ export default function SettingsPage() {
           <div className="p-5 md:p-6 space-y-3">
             <div className="flex justify-between text-sm">
               <span className="text-white/50">Platform</span>
-              <span className="text-white font-medium">Mufu v1.0</span>
+              <span className="text-white font-medium">Mufu v1.5</span>
             </div>
             <div className="flex justify-between text-sm">
               <span className="text-white/50">Access</span>

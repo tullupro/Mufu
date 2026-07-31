@@ -17,6 +17,7 @@
 /* ——— Base ——— */
 * {
   -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 
 html {
@@ -70,6 +71,14 @@ body, input, textarea, button {
   transform: translateZ(0);
   will-change: transform;
   backface-visibility: hidden;
+}
+
+/* Instant button press feedback */
+.btn-press {
+  transition: transform 0.1s ease;
+}
+.btn-press:active {
+  transform: scale(0.97);
 }
 
 /* ——— Range Slider (Volume) ——— */
@@ -148,4 +157,3 @@ input[type="range"]::-webkit-slider-thumb {
     transition-duration: 0.01ms !important;
   }
 }
-
