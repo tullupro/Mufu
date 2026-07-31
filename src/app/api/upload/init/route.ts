@@ -49,7 +49,7 @@ export async function POST(req: Request) {
           "Content-Type": "application/json",
           "X-Upload-Content-Type": mimeType,
           "X-Upload-Content-Length": size.toString(),
-          "Origin": process.env.NEXTAUTH_URL || "http://localhost:3000",
+          "Origin": (process.env.NEXTAUTH_URL || "http://localhost:3000").replace(/\/$/, ""),
         },
         body: JSON.stringify({
           name: filename,
